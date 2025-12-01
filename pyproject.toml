@@ -1,0 +1,19 @@
+[project]
+name = "delfos-mcp"
+version = "0.1.0"
+description = "MCP server for Delfos Azure SQL Database"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "httpx>=0.28.1",
+    "mcp[cli]>=1.21.0",
+    "pyodbc>=5.0.0",
+    "python-dotenv>=1.0.0",
+]
+
+[build-system]
+requires = [ "hatchling",]
+build-backend = "hatchling.build"
+
+[project.scripts]
+delfos-mcp = "delfos_mcp:main"
