@@ -5,11 +5,12 @@ This module sets up the FastMCP server for Delfos SQL database interactions.
 
 import os
 import pyodbc
-from typing import Any
 from dotenv import load_dotenv
 from mcp.server.fastmcp import FastMCP
 import logging
-import sys
+import uuid
+from datetime import datetime
+from typing import List, Dict
 
 # Load environment variables
 load_dotenv()
@@ -159,6 +160,30 @@ async def get_primary_keys(table_name: str) -> str:
     return ", ".join(key_list)
 
 @mcp.tool()
+async def get_distinct_values(table_name: str, column_name: str) -> str:
+    """
+    Retrieve distinct values from a specified column in a table.
+    
+    Args:
+        table_name (str): The name of the table.
+        column_name (str): The name of the column.
+    Returns:
+        str: Distinct values from the specified column.
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute(f"SELECT DISTINCT [{column_name}] FROM [SalesLT].[{table_name}]")
+    values = cursor.fetchall()
+    cursor.close()
+    conn.close()
+    
+    if not values:
+        return f"No distinct values found in column '{column_name}' of table '{table_name}'."
+    
+    value_list = [str(value[0]) for value in values]
+    return "\n".join(value_list)
+
+@mcp.tool()
 async def get_table_relationships() -> str:
     """
     Retrieve foreign key relationships between tables.
@@ -201,9 +226,9 @@ async def get_table_relationships() -> str:
     ]
     return "\n".join(rel_list)
 
-import uuid
-from datetime import datetime
-from typing import List, Dict
+
+
+
 
 @mcp.tool()
 async def insert_agent_output_batch(
@@ -273,6 +298,14 @@ async def insert_agent_output_batch(
 
 @mcp.tool()
 async def generate_powerbi_url(run_id: str, visual_hint: str) -> str:
+    """
+    Generate a Power BI report URL filtered by run_id and visual type.
+    Args:
+        run_id (str): The run identifier to filter the report.
+        visual_hint (str): The type of visualization ('linea', 'barras', 'barras_agrupadas', 'pie').
+    Returns:
+        str: The generated Power BI report URL.
+    """
     WORKSPACE_ID = os.getenv("WORKSPACE_ID")
     REPORT_ID    = os.getenv("REPORT_ID")
  
@@ -288,7 +321,7 @@ async def generate_powerbi_url(run_id: str, visual_hint: str) -> str:
     url = (
         f"https://app.powerbi.com/groups/{WORKSPACE_ID}/reports/{REPORT_ID}"
         f"?pageName={page_name}"
-        f"&filter=agent_output/run_id eq '{run_id}'"
+        f"&filter=agent_output/run_id%20eq%20'{run_id}'"
     )
  
     return url
